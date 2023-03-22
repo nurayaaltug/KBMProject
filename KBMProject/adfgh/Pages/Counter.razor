@@ -1,0 +1,67 @@
+﻿@page "/counter"
+@using KisiselBakimProje.Data
+
+@inject KisiselBakimMagazaServices kbms
+
+<h4>MAĞAZA EKLEME</h4>
+
+@if (Checksubmit)
+{
+    <p class="alert-warning">Mağaza Başarıyla Eklendi</p>
+}
+
+<EditForm Class="form-group" Model="@kbmm" OnSubmit="MagazaKonumTanimlama">
+    Mağaza Adı : <InputText id="name" Class="form-control" @bind-Value="kbmm.MagazaAdi" />
+    Şehir : <InputText id="name" Class="form-control" @bind-Value="kbmm.Sehir" />
+    Mağaza Açıklaması : <InputText id="name" Class="form-control" @bind-Value="kbmm.MagazaAciklama" />
+    <br />
+    <div class="row">
+        <div class="col-xl-6">
+            <p>Konum Seçiniz : </p>
+            <RadzenGoogleMap style="height:600px;" Zoom="zoom" Center="@(new GoogleMapPosition() { Lat = latm, Lng= lngm})" MapClick="@OnMapClick">
+                <Markers>
+                    @if (lat != 0 && lng != 0)
+                    {
+                        <RadzenGoogleMapMarker Title="Seçilen Konum" Label="Seçilen Konum" Position="@(new GoogleMapPosition() { Lat = lat, Lng=lng})" />
+
+                    }
+                </Markers>
+            </RadzenGoogleMap>
+        </div>
+    </div>
+    <br />
+    <button class="btn btn-info" type="submit">KONUM EKLE</button>
+</EditForm>
+
+
+
+
+@code {
+    int zoom = 10;
+    string clickedPosition = "";
+    double lat = 0, lng = 0;
+    double latm = 40.1343234, lngm = 31.9932453;
+
+    public KisiselBakimMagazaModel kbmm = new KisiselBakimMagazaModel();
+    public bool Checksubmit = false;
+
+    protected void MagazaKonumTanimlama()
+    {
+        if (lat != 0 && lng != 0)
+        {
+            kbms.MagazaEkle(kbmm);
+            Checksubmit = true;
+            kbmm = new KisiselBakimMagazaModel();
+        }
+    }
+
+    void OnMapClick(GoogleMapClickEventArgs args)
+    {
+        lat = Convert.ToDouble(args.Position.Lat);
+        lng = Convert.ToDouble(args.Position.Lng);
+        latm = Convert.ToDouble(args.Position.Lat);
+        lngm= Convert.ToDouble(args.Position.Lng);
+        kbmm.lat = lat.ToString().Replace(",", ".");
+        kbmm.lng = lng.ToString().Replace(",", ".");
+    }
+}

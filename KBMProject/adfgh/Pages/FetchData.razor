@@ -1,0 +1,111 @@
+﻿@page "/fetchdata"
+
+@using KisiselBakimProje.Data
+@using System.Data;
+@inject KisiselBakimMagazaServices kbms
+@inject SeciliKonumServices sks
+@inject UzaklikServices us
+
+<h4>KİŞİSEL BAKIM MAĞAZASI ARAMA</h4>
+
+
+<EditForm Class="form-group" Model="@skm" OnSubmit="SeciliKonumTanimla">
+    <div class="row">
+        <div class="col-xl-6">
+            <p>Konum Seçiniz : </p>
+            <RadzenGoogleMap style="height:600px;" Zoom="zoom" Center="@(new GoogleMapPosition() { Lat = latm, Lng= lngm})" MapClick="@OnMapClick" MarkerClick="@OnMarkerClick">
+                <Markers>
+                    @if (lat != 0 && lng != 0)
+                    {
+                        <RadzenGoogleMapMarker Title="Seçili Konum" Label="Seçili Konum" Position="@(new GoogleMapPosition() { Lat = lat, Lng=lng})" />
+
+                    }
+                    @if (Checksubmit)
+                    {
+                        @foreach (var k in uzakliste)
+                        {
+                            string bilgi = @k.MagazaAdi;
+                            <RadzenGoogleMapMarker Title=@bilgi Label=@bilgi Position="@(new GoogleMapPosition() { Lat = Convert.ToDouble(k.lat.Replace(".",",")), Lng=Convert.ToDouble(k.lng.Replace(".",","))})" />
+                        }
+                    }
+
+                </Markers>
+            </RadzenGoogleMap>
+        </div>
+    </div>
+    <br />
+    <button class="btn btn-info" type="submit">KİŞİSEL BAKIM MAĞAZASI ARA</button>
+    <br />
+</EditForm>
+@if (Checksubmit)
+{
+    @if (uzakliste == null)
+    {
+        <p><em>Yükleniyor...</em></p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mağaza Adı</th>
+                    <th>Şehir</th>
+                    <th>Seçili Konumdan Uzaklık</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in uzakliste)
+                {
+                    <tr>
+                        <td>@u.MagazaAdi</td>
+                        <td>@u.Sehir</td>
+                        <td>@u.Uzaklik</td>
+
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    }
+
+}
+
+@code {
+    int zoom = 10;
+    string clickedPosition = "";
+    double lat = 0, lng = 0;
+    double latm = 39.937988, lngm = 32.784185;
+
+    public SeciliKonumModel skm = new SeciliKonumModel();
+    public KisiselBakimMagazaModel kbmm = new KisiselBakimMagazaModel();
+    public List<UzaklikModel> uzakliste;
+    public bool Checksubmit = false;
+
+    protected void SeciliKonumTanimla()
+    {
+        if (lat != 0 && lng != 0)
+        {
+            sks.SeciliKonumSil();
+            sks.SeciliKonumTanimlama(skm);
+            uzakliste = us.MagazaKonumUzaklik();
+            skm = new SeciliKonumModel();
+            Checksubmit = true;
+        }
+    }
+
+    void OnMapClick(GoogleMapClickEventArgs args)
+    {
+        clickedPosition = $"Map clicked LAT: {args.Position.Lat}, LNG: {args.Position.Lng}";
+        lat = Convert.ToDouble(args.Position.Lat);
+        lng = Convert.ToDouble(args.Position.Lng);
+        latm = Convert.ToDouble(args.Position.Lat);
+        lngm = Convert.ToDouble(args.Position.Lng);
+        skm.lat = lat.ToString().Replace(",", ".");
+        skm.lng = lng.ToString().Replace(",", ".");
+
+    }
+    void OnMarkerClick(RadzenGoogleMapMarker args)
+    {
+        clickedPosition = $"Map {args.Title} clicked LAT: {args.Position.Lat}, LNG: {args.Position.Lng}";
+    }
+}

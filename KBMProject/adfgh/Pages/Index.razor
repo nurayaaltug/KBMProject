@@ -1,0 +1,83 @@
+﻿@page "/"
+@using KisiselBakimProje.Data
+
+@inject KisiselBakimMagazaServices kbms
+
+@if (KBkonumliste == null)
+{
+    <p><em>Yükleniyor...</em></p>
+}
+else 
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Mağaza ID</th>
+                <th>Mağaza Adı</th>
+                <th>Şehir</th>
+                <th>Mağaza Açıklaması</th>
+                <th>Sil</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in KBkonumliste)
+            {
+            <tr>
+                <td>@m.Id </td>
+                <td>@m.MagazaAdi</td>
+                <td>@m.Sehir</td>
+                <td>@m.MagazaAciklama</td>
+                <td><button class="btn btn-danger" @onclick="(() => SilMagazaKonum(m))">Sil</button></td>
+
+            </tr>
+            }
+        </tbody>
+
+    </table>
+}
+
+
+<div class="row">
+    <div class="col-xl-6">
+        <p>Kişisel Bakım Mağazaları Konumları : </p>
+        <RadzenGoogleMap style="height:600px;" Zoom="@zoom" Center="@(new GoogleMapPosition() { Lat = 39.937988, Lng=32.784185 })" MapClick="@OnMapClick" MarkerClick="@OnMarkerClick">
+            <Markers>
+                @foreach (var k in KBkonumliste)
+                {
+                    string bilgi = @k.MagazaAdi;
+                    <RadzenGoogleMapMarker Title=@bilgi Label=@bilgi Position="@(new GoogleMapPosition() { Lat = Convert.ToDouble(k.lat.Replace(".",",")), Lng=Convert.ToDouble(k.lng.Replace(".",","))})" />
+                }
+            </Markers>
+        </RadzenGoogleMap>
+    </div>
+</div>
+
+@code{
+    int zoom = 3;
+    string clickedPosition = "";
+    int lat = 0, lng = 0;
+
+    public KisiselBakimMagazaModel kkm = new KisiselBakimMagazaModel();
+    public List<KisiselBakimMagazaModel> KBkonumliste;
+    public bool Checksubmit = false;
+
+    protected override void OnInitialized()
+    {
+        KBkonumliste = kbms.MagazaListele();
+    }
+
+    void OnMapClick(GoogleMapClickEventArgs args)
+    {
+        lat = Convert.ToInt32(args.Position.Lat);
+        lng = Convert.ToInt32(args.Position.Lng);
+    }
+    void OnMarkerClick(RadzenGoogleMapMarker args)
+    {
+        clickedPosition = $"Map {args.Title} clicked LAT: {args.Position.Lat}, LNG: {args.Position.Lng}";
+    }
+    void SilMagazaKonum(KisiselBakimMagazaModel M)
+    {
+        kbms.SilMagazaKonum(M);
+        OnInitialized();
+    }
+}
